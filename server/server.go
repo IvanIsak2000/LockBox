@@ -26,13 +26,13 @@ func main() {
 func (s *Server) Ping(request *structs.ConnectRequest) *structs.ConnectResponse {
 	fmt.Printf("\nRequest: %v\n", request)
 	if request == nil{
-		return &structs.ConnectResponse{Success: false, Message: "Request cannot be nil"}
+		return &structs.ConnectResponse{Status: 400, Message: "Request need contains api_key"}
 	}
 	
 	if request.ApiKey != s.ApiKey{
-		return &structs.ConnectResponse{Success: false, Message: "Incorrect ApiKey"}
+		return &structs.ConnectResponse{Status: 401, Message: "Incorrect ApiKey"}
 	}
 	
-	return &structs.ConnectResponse{Success: true, Message: "You are login"}
+	return &structs.ConnectResponse{Status: 200, Message: "Welcome!"}
 	
 }
