@@ -1,3 +1,6 @@
+import argparse
+
+import uvicorn
 from fastapi import FastAPI
 
 router = FastAPI()
@@ -6,7 +9,7 @@ router = FastAPI()
 # Добавление пароля (POST)
 @router.post("/passwords/")
 async def add_password(url: str, password: str):
-    return {"password": password}
+    return {"url": url, "password": password}
 
 
 # Удаление пароля (DELETE)
@@ -19,3 +22,15 @@ async def delete_password(password_id: int):
 @router.get("/passwords/")
 async def get_passwords():
     return {"passwords": ["password1", "password2"]}
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="command", help="Доступные команды")
+
+    subparsers.add_parser("init", help='Первоначальная инициализация сервера')
+    subparsers.add_parser("serve", help='Запуск сервера.')
+
+    args = parser.parse_args()
+    if args.command == "serve":
+        uvicorn.run(router)
