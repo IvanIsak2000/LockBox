@@ -1,13 +1,22 @@
 package key
 
 import (
-	"fmt"
 	"math/rand"
-	"time"
 )
 
+
+// Генерирует случайный apiKey
 func GenerateApiKey() string {
-	rand.Seed(time.Now().Unix())
-	return fmt.Sprintf("%x", rand.Int())
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const digits = "0123456789"
+	const symbols = letters + digits
 	
+	var apiKeyLen = 100
+	var apiKey string
+	
+	for i:=0; i < apiKeyLen; i++{
+		randPos := rand.Intn(len(symbols))
+		apiKey += string(symbols[randPos])
+	}
+	return apiKey
 }

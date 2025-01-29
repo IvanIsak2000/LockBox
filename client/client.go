@@ -1,40 +1,50 @@
 package main
 
 import (
-	"client/config"
+	"client/connect"
+	"client/ping"
 	"flag"
 	"fmt"
-	"log"
-	"net/http"
-	"net/url"
+
+	color "github.com/helioloureiro/golorama"
 )
 
 func main() {
-	pingFlag := flag.String("ping", "", "Ping a server.")
-	// connectFlag := flag.String("connect", "http://localhost:8080/", "Connect to server")
+	pingFlag := flag.String("ping", "", "Сделать пинг сервера")
+	connectFlag := flag.String("connect", "", "Соединение с сервером")
+	apiKeyFlag := flag.String("apiKey", "", "api_key параметр для подключения")
 	// unconnectlogin := flag.Bool("unconnect", false, "Unconnect from server")
 	// syncFlag := flag.Bool("sync", false, "")
 	
 	flag.Parse()
 	
-	if *pingFlag != ""{
-		config, err  := config.GetConfig()
-		if err != nil {
-			log.Fatal(err)
+	if *pingFlag != ""{	
+		resp := ping.PingServer(*pingFlag + "/")	
+		switch resp{
+			case 200:
+				fmt.Println(color.GetCSI(color.GREEN) + "Сервер доступен" + color.Reset())
+			case 404:
+				fmt.Println(color.GetCSI(color.RED) + "Эндпоинт не найден, попробуйте URL_СЕРВЕРА без лишних `/`" + color.Reset())
+			default:
+				fmt.Println(color.GetCSI(color.RED) + "Неопознаная ошибка: ", string(resp) + color.Reset())
 		}
-		
-		data := url.Values{}
-		data.Add("api_key", config.ApiKey)
-		fmt.Println("API Key:", config.ApiKey)
-
-		
-		response, err := http.PostForm(*pingFlag + "/ping", data)
-		if err != nil {
-			log.Fatal("Не удалось пингануть сервер: ", err)
-		}
-		fmt.Println("Ответ от сервера: ", response)
 	}
 	
-	fmt.Println("args: ", flag.Args())
-	
+	if *connectFlag != ""{
+		if *apiKeyFlag != "" {
+			resp := connect.SendConnectionRequest(*connectFlag + "/connect", *apiKeyFlag)
+			switch resp {
+				case 200:
+					fmt.Println(color.GetCSI(color.GREEN) + "Авторизация успешно пройдена!" + color.Reset())
+				case 400:
+					fmt.Println(color.GetCSI(color.RED) + "Требуется параметр api_key" + color.Reset())
+				case 401:
+					fmt.Println(color.GetCSI(color.RED) + "Неверный api_key" + color.Reset())
+				default:
+					fmt.Printf(color.GetCSI(color.RED) + "Неопознаная ошибка: ", string(resp) + color.Reset())
+			}
+		} else {
+			fmt.Println(color.GetCSI(color.RED) + "Для подключения к серверу необходимо передать параметр apiKey: ... --apiKey <API_KEY>" + color.Reset())
+		}
+	}
 }

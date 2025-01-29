@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"server/key"
 	"server/structs"
+
+	"github.com/gin-gonic/gin"
+	"github.com/helioloureiro/golorama"
 	"github.com/meteran/gnext"
 )
 
@@ -15,24 +18,32 @@ type Server struct{
 func main() {
 	apikey := key.GenerateApiKey()
 	server := &Server{ApiKey: apikey}
+	gin.SetMode(gin.ReleaseMode)
 	
-	fmt.Printf("\nApikey: %v\n", apikey)
+	fmt.Printf(golorama.GetCSI(golorama.RED) + "\nAPIKEY: %v\n", apikey + golorama.Reset())
+	
 	
 	router := gnext.Router()
-	router.POST("/ping", server.Ping)
+	router.GET("/", Ping)
+	router.POST("/connect", server.Connection)
+	
 	_ = router.Run()
 }
 	
-func (s *Server) Ping(request *structs.ConnectRequest) *structs.ConnectResponse {
-	fmt.Printf("\nRequest: %v\n", request)
+func Ping(request *structs.PingRequest) *structs.PingResponse {
+	return &structs.PingResponse{Status: 200, Message: "Welcome!"}
+	
+}
+
+
+func (s *Server) Connection(request *structs.ConnectRequest) *structs.ConnectResponse{
 	if request == nil{
-		return &structs.ConnectResponse{Status: 400, Message: "Request need contains api_key"}
+		return &structs.ConnectResponse{Status: 400, Message: "Требуется параметр api_key"}
 	}
 	
 	if request.ApiKey != s.ApiKey{
-		return &structs.ConnectResponse{Status: 401, Message: "Incorrect ApiKey"}
+		return &structs.ConnectResponse{Status: 401, Message: "Неверный api_key"}
 	}
 	
 	return &structs.ConnectResponse{Status: 200, Message: "Welcome!"}
-	
 }
