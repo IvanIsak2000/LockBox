@@ -2,7 +2,10 @@ package connect
 
 import (
 	"bytes"
+	"client/structs"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -10,48 +13,43 @@ import (
 )
 
 func SendConnectionRequest(url string, apiKey string) gnext.Status {
-	// Создаем структуру данных с API ключом
-	data := struct {
-		APIKey string `json:"api_key"`
-	}{
-		APIKey: apiKey,
-	}
-
-	// Маршализуем структуру в JSON
+	data := map[string]string{"api_key": apiKey}
+	
 	marshData, err := json.Marshal(data)
 	if err != nil {
-		log.Fatal("Не удалось маршализовать данные для connect: ", err)
+		log.Fatal("Не удалось маршализовать данные: ", err)
 	}
-
-	// Создаем тело запроса
-	body := bytes.NewReader(marshData)
-
-	// Создаем новый HTTP запрос
-	req, err := http.NewRequest("POST", url, body)
+	
+	readData := bytes.NewReader(marshData)
+	request, err := http.NewRequest("POST", url, readData)
 	if err != nil {
 		log.Fatal("Не удалось создать запрос: ", err)
 	}
-
-	// Отправляем запрос
+	request.Header.Set("Content-Type", "application/json")
+	
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	response, err := client.Do(request)
 	if err != nil {
 		log.Fatal("Не удалось отправить запрос: ", err)
 	}
-	defer resp.Body.Close()
+	
+	defer response.Body.Close()
+	
+	if response.StatusCode == http.StatusOK{
+		bodyBytes, err := io.ReadAll(response.Body)
+		if err != nil {
+			log.Fatal("Не удалось прочитать тело ответа: ", err)
+		}
+		fmt.Println("Тело ответа: ", string(bodyBytes))
+		
+		connectResponse := &structs.ConnectResponse{}
+		err = json.Unmarshal(bodyBytes, connectResponse)
+		if err != nil {
+			log.Fatal("Не удалось распаковать байты в структуру: ", err)
+		}
+		
+		return connectResponse.Status
+	} 
+	return gnext.Status(response.StatusCode)
 
-	// Читаем тело ответа
-	var response struct {
-		Status  int    `json:"status"`
-		Message string `json:"message"`
-	}
-
-	// Парсим тело ответа в структуру
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		log.Fatal("Не удалось распарсить ответ: ", err)
-	}
-
-	// Возвращаем статус из тела ответа
-	return gnext.Status(response.Status)
 }

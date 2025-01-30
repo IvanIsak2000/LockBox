@@ -41,9 +41,9 @@ func (s *Server) Connection(request *structs.ConnectRequest) *structs.ConnectRes
 		return &structs.ConnectResponse{Status: 400, Message: "Требуется параметр api_key"}
 	}
 	
-	if request.ApiKey != s.ApiKey{
-		return &structs.ConnectResponse{Status: 401, Message: "Неверный api_key"}
+	if request.ApiKey == s.ApiKey{
+		return &structs.ConnectResponse{Status: 200, Message: "Welcome!"}
 	}
+	return &structs.ConnectResponse{Status: 401, Message: "Неверный api_key"}
 	
-	return &structs.ConnectResponse{Status: 200, Message: "Welcome!"}
 }
