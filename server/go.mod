@@ -5,6 +5,7 @@ go 1.23.2
 require (
 	github.com/gin-gonic/gin v1.9.0
 	github.com/helioloureiro/golorama v0.1.4
+	github.com/joho/godotenv v1.5.1
 	github.com/meteran/gnext v0.10.2
 )
 

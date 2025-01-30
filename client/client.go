@@ -23,7 +23,7 @@ func main() {
 	// syncFlag := flag.Bool("sync", false, "")
 	
 	flag.Parse()
-	
+
 	if *pingFlag != ""{	
 		resp := ping.PingServer(*pingFlag + PingUrl)	
 		switch resp{

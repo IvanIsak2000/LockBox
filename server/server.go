@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"server/color"
+	"server/config"
 	"server/key"
 	"server/structs"
 
@@ -16,13 +18,16 @@ type Server struct{
 
 // Запуск сервера и обработка http запросов
 func main() {
-	apikey := key.GenerateApiKey()
-	server := &Server{ApiKey: apikey}
+	if !config.PrivateKeyIsExist(){
+		newApikey := key.GenerateApiKey()
+		config.DoPrivateKeyFile(newApikey)
+		
+	}
+	config := config.GetConfig()
+	server := &Server{ApiKey: config.ApiKey}
+	color.Print(fmt.Sprint("API_KEY: ", config.ApiKey), golorama.RED)
+	
 	gin.SetMode(gin.ReleaseMode)
-	
-	fmt.Printf(golorama.GetCSI(golorama.RED) + "\nAPIKEY: %v\n", apikey + golorama.Reset())
-	
-	
 	router := gnext.Router()
 	router.GET("/", Ping)
 	router.POST("/connect", server.Connection)
