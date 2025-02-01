@@ -2,21 +2,28 @@ package main
 
 import (
 	"crypto/aes"
+	"encoding/hex"
 	"fmt"
 	"log"
 )
 
-func Encrypt(data string) {
+func Encrypt(key, data string) string {
+	keyBytes := []byte(key)
 	dataBytes := []byte(data)
-	cipher, err := aes.NewCipher(dataBytes)
+	Result := make([]byte, len(dataBytes))
+	
+	block, err := aes.NewCipher(keyBytes)
 	if err != nil {
 		log.Fatal("Не удалось создать NewCipher: ", err)
 	}
-	fmt.Printf("cipher: %v\n", cipher)
+	block.Encrypt(Result, dataBytes)
+	return hex.EncodeToString(Result)
+	
 }
 
 func main() {
-	data := "my_super_password"
-	Encrypt(data)
-
+	key := "my_super_passwor"
+	data := "мой_секретная_ин"
+	encryptData := Encrypt(key, data)
+	fmt.Printf("encryptData: %v\n", encryptData)
 }
