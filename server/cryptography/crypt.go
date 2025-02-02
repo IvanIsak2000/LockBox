@@ -5,25 +5,78 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"math/rand"
+
+	"golang.org/x/crypto/argon2"
 )
 
-func Encrypt(key, data string) string {
-	keyBytes := []byte(key)
-	dataBytes := []byte(data)
-	Result := make([]byte, len(dataBytes))
+const (
+	blockSize = 16
+	symbols = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+)
+
+func GenerateKey() []byte {
+	var key []byte
 	
-	block, err := aes.NewCipher(keyBytes)
-	if err != nil {
-		log.Fatal("Не удалось создать NewCipher: ", err)
+	for i := 0; i < blockSize; i++ {
+		index := rand.Intn(len(symbols))
+		key = append(key, symbols[index])
+		
 	}
-	block.Encrypt(Result, dataBytes)
-	return hex.EncodeToString(Result)
+	return key
+}
+
+func Encrypt(key []byte, data string) string {
+	dataBytes := []byte(data)
+	result := make([]byte, len(dataBytes))
+	
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		log.Fatal("Не удалось создать шифровальщик ", err)
+	}
+	block.Encrypt(result, dataBytes)
+	return hex.EncodeToString(result)
 	
 }
 
+func Decrypt(key []byte, data string) string {
+	
+	dataBytes, err := hex.DecodeString(data)
+	if err != nil {
+		log.Fatal("Не удалось декодировать данные: ", err)
+	}
+	
+	Result := make([]byte, len(dataBytes))
+	
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		log.Fatal("Не удалось создать шифровальщик ", err)
+	}
+	block.Decrypt(Result, dataBytes)
+	return string(Result)
+}
+
+func EncodeMasterKey(key []byte) string {
+	encryptMasterKey := argon2.Key(key, []byte("salt"), 3, 32*1024, 4, 32)
+	return hex.EncodeToString(encryptMasterKey)
+}
+
 func main() {
-	key := "my_super_passwor"
-	data := "мой_секретная_ин"
+	// Создём мастер ключ и выдаём его хэш - то есть для сравнения будет использовать хэш от мастер ключа 
+	key := GenerateKey()
+	fmt.Printf("hex.EncodeToString(key): %v\n", hex.EncodeToString(key))
+	encryptKey := EncodeMasterKey(key)
+	fmt.Printf("encryptKey: %v\n", encryptKey)
+	
+	
+	data := "hello_worlds123!"
+	fmt.Printf("Данные: %v\n", data)
+	fmt.Printf("Длина данных: %v\n", len(data))
+	
+	// TODO: добавить расшифровку из argon2 мастер ключа и передавать уже его!
 	encryptData := Encrypt(key, data)
-	fmt.Printf("encryptData: %v\n", encryptData)
+	fmt.Printf("Зашифрованные данные: %v\n", encryptData)
+	
+	decryptData := Decrypt(key, encryptData)
+	fmt.Printf("decryptData: %v\n", decryptData)
 }
