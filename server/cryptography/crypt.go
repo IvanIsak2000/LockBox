@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 
 	"golang.org/x/crypto/argon2"
 )
@@ -13,6 +14,8 @@ import (
 const (
 	blockSize = 16
 	symbols = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	secretKeyFile = "secret.key"
+	salt = "апапапап"
 )
 
 func GenerateKey() []byte {
@@ -40,7 +43,6 @@ func Encrypt(key []byte, data string) string {
 }
 
 func Decrypt(key []byte, data string) string {
-	
 	dataBytes, err := hex.DecodeString(data)
 	if err != nil {
 		log.Fatal("Не удалось декодировать данные: ", err)
@@ -57,21 +59,31 @@ func Decrypt(key []byte, data string) string {
 }
 
 func EncodeMasterKey(key []byte) string {
-	encryptMasterKey := argon2.Key(key, []byte("salt"), 3, 32*1024, 4, 32)
+	encryptMasterKey := argon2.Key(key, []byte(salt), 1, 32*1024, 4, 32)
 	return hex.EncodeToString(encryptMasterKey)
+}
+
+func WriteEncryptKey(key string) {
+	os.Remove(secretKeyFile)
+	file, err := os.Create(secretKeyFile)
+	if err != nil {
+		log.Fatalf("Не удалось создать файл %v: %v", secretKeyFile, err)
+	}
+	defer file.Close()
+	file.WriteString(key)
 }
 
 func main() {
 	// Создём мастер ключ и выдаём его хэш - то есть для сравнения будет использовать хэш от мастер ключа 
 	key := GenerateKey()
-	fmt.Printf("hex.EncodeToString(key): %v\n", hex.EncodeToString(key))
+	fmt.Printf("Ключ: %v\n", hex.EncodeToString(key))
 	encryptKey := EncodeMasterKey(key)
-	fmt.Printf("encryptKey: %v\n", encryptKey)
+	fmt.Printf("argoned key: %v\n", encryptKey)
+	WriteEncryptKey(encryptKey)
 	
 	
 	data := "hello_worlds123!"
 	fmt.Printf("Данные: %v\n", data)
-	fmt.Printf("Длина данных: %v\n", len(data))
 	
 	// TODO: добавить расшифровку из argon2 мастер ключа и передавать уже его!
 	encryptData := Encrypt(key, data)
