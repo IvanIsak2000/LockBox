@@ -25,3 +25,4 @@ go.work.sum
 .env
 secret.key
 .idea
+MASTER.KEY
