@@ -52,3 +52,5 @@ func (s *Server) Connection(request *structs.ConnectRequest) *structs.ConnectRes
 	return &structs.ConnectResponse{Status: 401, Message: "Неверный api_key"}
 	
 }
+
+func GetPassword( ) {}
