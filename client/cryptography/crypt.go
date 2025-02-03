@@ -11,36 +11,36 @@ import (
 )
 
 const (
-	blockSize = 16
-	symbols = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	blockSize     = 16
+	symbols       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	secretKeyFile = "secret.key"
-	salt = "апапапап"
+	masterKeyFile = "MASTER.KEY" // TODO: remove in production
+	salt          = "апапапап"
 )
 
 func GenerateKey() []byte {
 	var key []byte
-	
+
 	for i := 0; i < blockSize; i++ {
 		index := rand.Intn(len(symbols))
 		key = append(key, symbols[index])
-		
+
 	}
 	return key
 }
-
 
 // Шифровка данных
 func Encrypt(key []byte, data string) string {
 	dataBytes := []byte(data)
 	result := make([]byte, len(dataBytes))
-	
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal("Не удалось создать шифровальщик ", err)
 	}
 	block.Encrypt(result, dataBytes)
 	return hex.EncodeToString(result)
-	
+
 }
 
 // Дешифрока данных
@@ -49,9 +49,9 @@ func Decrypt(key []byte, data string) string {
 	if err != nil {
 		log.Fatal("Не удалось декодировать данные: ", err)
 	}
-	
+
 	Result := make([]byte, len(dataBytes))
-	
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal("Не удалось создать шифровальщик ", err)
@@ -73,4 +73,16 @@ func WriteEncryptKey(key string) {
 	}
 	defer file.Close()
 	file.WriteString(key)
+}
+
+// СОХРАНЕНИЕ МАСТЕР КЛЮЧА
+func WriteMasterKey(masterKey string) {
+	os.Remove(masterKeyFile)
+
+	file, err := os.Create(masterKeyFile)
+	if err != nil {
+		log.Fatalf("Не удалось создать %v: %v", masterKeyFile, err)
+	}
+	defer file.Close()
+	file.WriteString(masterKey)
 }

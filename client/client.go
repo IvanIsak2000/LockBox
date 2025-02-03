@@ -72,9 +72,11 @@ func main() {
 			newKey := cryptography.GenerateKey()
 			encryptKey := cryptography.ArgonMasterKey(newKey)
 			fmt.Printf("encryptKey: %v\n", encryptKey)
+			cryptography.WriteEncryptKey(encryptKey)
+
 			keyStr := string(newKey)
 			fmt.Printf("изнчальный ключ: %v\n", keyStr)
-			cryptography.WriteEncryptKey(encryptKey)
+			cryptography.WriteMasterKey(keyStr)
 			
 		}
 		fmt.Printf("fileData: %v\n", string(fileData))
