@@ -1,6 +1,7 @@
 package main
 
 import (
+	"client/color"
 	"client/config"
 	"client/connect"
 	"client/cryptography"
@@ -10,7 +11,7 @@ import (
 	"os"
 	"strconv"
 
-	color "github.com/helioloureiro/golorama"
+	"github.com/helioloureiro/golorama"
 )
 
 const (
@@ -32,11 +33,14 @@ func main() {
 		resp := ping.PingServer(*pingFlag + PingUrl)	
 		switch resp{
 			case 200:
-				fmt.Println(color.GetCSI(color.GREEN) + "Сервер доступен" + color.Reset())
+				color.Print("Сервер доступен", golorama.GREEN)
 			case 404:
-				fmt.Println(color.GetCSI(color.RED) + "Эндпоинт не найден, попробуйте URL_СЕРВЕРА без лишних `/`" + color.Reset())
+				color.Print("Эндпоинт не найден, попробуйте URL_СЕРВЕРА без лишних `/`", golorama.RED)
 			default:
-				fmt.Println(color.GetCSI(color.RED) + "Неопознаная ошибка: ", strconv.Itoa(int(resp)) + color.Reset())
+				color.Print(
+					fmt.Sprintf("Неопознаная ошибка: %v", strconv.Itoa(int(resp))),
+					golorama.RED,
+				)
 		}
 	}
 	
@@ -44,22 +48,26 @@ func main() {
 		
 		config, err := config.GetConfig()
 		if err != nil {
-			fmt.Println(color.GetCSI(color.RED) + "Для подключения сначала установите API_KEY в файле .env" + color.Reset())
+			color.Print(
+				"Для подключения сначала установите API_KEY в файле .env", 
+				golorama.RED)
 		}
 		
 		resp := connect.SendConnectionRequest(*connectFlag + ConnectUrl, config.ApiKey)
 		switch resp {
 			case 200:
-				fmt.Println(color.GetCSI(color.GREEN) + "Авторизация успешно пройдена!" + color.Reset())
+				color.Print("Авторизация успешно пройдена!", golorama.GREEN)
 			case 400:
-				fmt.Println(color.GetCSI(color.RED) + "Требуется параметр api_key" + color.Reset())
+				color.Print("Требуется параметр api_key", golorama.RED)
 			case 401:
-				fmt.Println(color.GetCSI(color.RED) + "Неверный api_key" + color.Reset())
+			color.Print("Неверный api_key" , golorama.RED)
 			case 404:
-				fmt.Println(color.GetCSI(color.RED) + "Эндпоинт не найден, попробуйте URL_СЕРВЕРА без лишних `/`" + color.Reset())
+			color.Print("Эндпоинт не найден, попробуйте URL_СЕРВЕРА без лишних `/`", golorama.RED)
 			default:
-				fmt.Printf(color.GetCSI(color.RED) + "Неопознаная ошибка: ", strconv.Itoa(int(resp)) + color.Reset())
-		}
+			color.Print(
+				fmt.Sprintf("Неопознаная ошибка: %v", strconv.Itoa(int(resp))),
+				golorama.RED,
+			)		}
 	} 
 	
 	if *loginFlag != ""{
@@ -68,29 +76,45 @@ func main() {
 		
 		fileData, err := os.ReadFile("secret.key")
 		if err != nil {
-			println("Файл secret.key отсутствует, поэтому проверка мастер ключа невозможна. Создаю...")
+			color.Print(
+				"Файл secret.key отсутствует, поэтому проверка мастер ключа пока невозможна. Создаю...",
+				golorama.RED,
+			)
 			newKey := cryptography.GenerateKey()
 			encryptKey := cryptography.ArgonMasterKey(newKey)
 			fmt.Printf("encryptKey: %v\n", encryptKey)
 			cryptography.WriteEncryptKey(encryptKey)
 
 			keyStr := string(newKey)
-			fmt.Printf("изнчальный ключ: %v\n", keyStr)
+			color.Print(
+				fmt.Sprintf(`
+ВАШ MASTER KEY УСПЕШНО СОЗДАН:
+-----------------------------
+%v
+-----------------------------
+СОХРАНИТЕ ЕГО В НАДЁЖНОМ МЕСТЕ. ПРОГРАММА
+НЕ ЗНАЕТ ЕГО, ПОЭТОМУ ВЫ ЕГО БОЛЬШЕ НИКОГДА НЕ УВИДИТЕ.
+ПРИ ЕГО УТРАТЕ ВЫ НЕ СМОЖЕТЕ ВОССТАНОВИТЬ ВАШИ ДАННЫЕ
+
+`, keyStr),
+				golorama.GREEN,
+			)
 			cryptography.WriteMasterKey(keyStr)
 			
-		}
-		fmt.Printf("fileData: %v\n", string(fileData))
-		// suggessMasterKeyHex := hex.EncodeToString([]byte(suggessMasterKey))
-		// fmt.Printf("suggessMasterKeyHex: %v\n", suggessMasterKeyHex)
-		if string(fileData) ==  suggessMasterKey{
-			fmt.Println("Пароль верный!")
 		} else {
-			fmt.Println("Пароль неверный!")
+			fmt.Printf("fileData: %v\n", string(fileData))
+			if string(fileData) ==  suggessMasterKey{
+				// если пользователь делает login, то в эту переменную
+				// сохраняет исходынй ключ, если конечно он прошёл аргонирование и проверку на хэш
+				var MasterKey string 
+				MasterKey = *loginFlag
+				
+				color.Print("Пароль верный!", golorama.GREEN)
+				fmt.Printf("MasterKey: %v\n", MasterKey)
+			} else {
+				color.Print("Пароль неверный!", golorama.RED)
+			}
 		}
-		// var MasterKey string 
-		// MasterKey = *loginFlag
-		// если пользователь делает login, то в эту переменную
-		// сохраняет исходынй ключ, если конечно он прошёл аргонирование и проверку на хэш
 		
 	}
 }
